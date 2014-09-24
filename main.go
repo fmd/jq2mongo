@@ -1,37 +1,37 @@
 package main
 
 import (
-	"encoding/json"
-	"fmt"
-	"github.com/docopt/docopt-go"
-	"io/ioutil"
-	"strconv"
+    "fmt"
+    "io/ioutil"
+    "github.com/docopt/docopt-go"
+    "encoding/json"
+    "strconv"
 )
 
 type Comment struct {
-	Text      string `json:"text"`
-	Points    string `json:"points"`
-	IntPoints int    `json:"int_points"`
-	User      string `json:"user"`
-	Time      string `json:"time"`
+    Text string `json:"text"`
+    Points string `json:"points"`
+    IntPoints int `json:"int_points"`
+    User string `json:"user"`
+    Time string `json:"time"`
 }
 
 type Post struct {
-	Title     string    `json:"title"`
-	User      string    `json:"user"`
-	Time      string    `json:"time"`
-	Points    string    `json:"points"`
-	IntPoints int       `json:"int_points"`
-	Id        string    `json:"id"`
-	Comments  []Comment `json:"comments"`
+    Title string `json:"title"`
+    User string `json:"user"`
+    Time string `json:"time"`
+    Points string `json:"points"`
+    IntPoints int `json:"int_points"`
+    Id string `json:"id"`
+    Comments []Comment `json:"comments"`
 }
 
 type File struct {
-	Posts []Post `json:"posts"`
+    Posts []Post `json:"posts"`
 }
 
 func main() {
-	usage := `jq2mongo.
+      usage := `jq2mongo.
 
 Usage:
   jq2mongo <file>
@@ -39,52 +39,49 @@ Usage:
 Options:
   -h --help     Show this screen.
   --version     Show version.
-`
-	arguments, _ := docopt.Parse(usage, nil, true, "jq2mongo 0", false)
+`  
+      arguments, _ := docopt.Parse(usage, nil, true, "jq2mongo 0", false)
 
-	content, err := ioutil.ReadFile(arguments["<file>"].(string))
-	if err != nil {
-		panic(err)
-	}
+      content, err := ioutil.ReadFile(arguments["<file>"].(string))
+      if err != nil {
+        panic(err)
+      }
 
-	var f File
-	err = json.Unmarshal(content, &f)
+      var f File
+      err = json.Unmarshal(content, &f)
 
-	if err != nil {
-		panic(err)
-	}
+      if err != nil {
+        panic(err)
+      }
 
-	var o []byte
+      var o []byte
 
-	for p := range f.Posts {
-		post := f.Posts[p]
+      for p := range(f.Posts) {
+        post := f.Posts[p]
 
-		ip, err := strconv.Atoi(post.Points)
-		if err == nil {
-			post.IntPoints = ip
-		}
+        ip, err := strconv.Atoi(post.Points)
+        if err == nil {
+            post.IntPoints = ip
+        }
 
-		for c := range post.Comments {
-			comment := post.Comments[c]
-			ipc, err := strconv.Atoi(comment.Points)
-			if err == nil {
-				comment.IntPoints = ipc
-			}
-			post.Comments[c] = comment
-		}
+        for c := range(post.Comments) {
+            comment := post.Comments[c]
+            ipc, err := strconv.Atoi(comment.Points)
+            if err == nil {
+                comment.IntPoints = ipc
+            }
+            post.Comments[c] = comment
+        }
 
-		j, err := json.Marshal(post)
-		if err != nil {
-			panic(err)
-		}
+        j, err := json.Marshal(post)
+        if err != nil {
+            panic(err)
+        }
 
-		j = append(j, '\n')
-		o = append(o, j...)
+        j = append(j, '\n')
+        o = append(o, j...)
 
-		if p > 10 {
-			break
-		}
-	}
+      }
 
-	fmt.Printf("%s", o)
+      fmt.Printf("%s", o)
 }
