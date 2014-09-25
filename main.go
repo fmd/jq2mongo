@@ -14,6 +14,7 @@ type Comment struct {
     IntPoints int `json:"int_points"`
     User string `json:"user"`
     Time string `json:"time"`
+    Post string `json:"post"`
 }
 
 type Post struct {
@@ -23,7 +24,7 @@ type Post struct {
     Points string `json:"points"`
     IntPoints int `json:"int_points"`
     Id string `json:"id"`
-    Comments []Comment `json:"comments"`
+    Comments []Comment `json:"comments,omitempty"`
 }
 
 type File struct {
@@ -34,13 +35,15 @@ func main() {
       usage := `jq2mongo.
 
 Usage:
-  jq2mongo <file>
+  jq2mongo posts <file>
+  jq2mongo comments <file>
 
 Options:
   -h --help     Show this screen.
   --version     Show version.
 `  
       arguments, _ := docopt.Parse(usage, nil, true, "jq2mongo 0", false)
+      //fmt.Println(arguments)
 
       content, err := ioutil.ReadFile(arguments["<file>"].(string))
       if err != nil {
@@ -54,7 +57,8 @@ Options:
         panic(err)
       }
 
-      var o []byte
+      var postsBytes []byte
+      var commentsBytes []byte
 
       for p := range(f.Posts) {
         post := f.Posts[p]
@@ -70,18 +74,32 @@ Options:
             if err == nil {
                 comment.IntPoints = ipc
             }
-            post.Comments[c] = comment
+            
+            comment.Post = post.Id
+
+            commentBytes, err := json.Marshal(comment)
+            if err != nil {
+                panic(err)
+            }
+
+            commentBytes = append(commentBytes, '\n')
+            commentsBytes = append(commentsBytes, commentBytes...)
         }
 
-        j, err := json.Marshal(post)
+        post.Comments = nil
+
+        postBytes, err := json.Marshal(post)
         if err != nil {
             panic(err)
         }
 
-        j = append(j, '\n')
-        o = append(o, j...)
+        postBytes = append(postBytes, '\n')
+        postsBytes = append(postsBytes, postBytes...)
 
       }
-
-      fmt.Printf("%s", o)
+      if arguments["posts"].(bool) == true {
+        fmt.Printf("%s", postsBytes)
+      } else {
+        fmt.Printf("%s", commentsBytes)
+      }
 }
