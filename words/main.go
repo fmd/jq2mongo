@@ -298,7 +298,7 @@ func main() {
 
         session.SetMode(mgo.Monotonic, true)
 
-        c := session.DB("kotakuinaction").C("words")
+        c := session.DB("mensrights").C("words")
 
         var results []Word
 
@@ -309,7 +309,7 @@ func main() {
 
         for r := range(results) {
             word := results[r].Id
-            if (!exclude(word)) {
+            if (!exclude(word) && results[r].Value > 500) {
                 fmt.Println(fmt.Sprintf("%s;%s;#16a085;Chrysanthi Regular;",results[r].Id, strconv.Itoa(results[r].Value)))
             }
         }
